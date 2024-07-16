@@ -1,66 +1,78 @@
-//drop down menu
-import dropdownMenu from "./dropdownMenu";
-import "./styles.css";
+import './styles.css'
 
-const hmaBurgerButton = document.querySelector(".hamb");
-const menuItems = document.querySelector(".menuItems");
-dropdownMenu(hmaBurgerButton, menuItems);
+const inputBox = document.querySelector("#search");
+const buttonSearch = document.querySelector(".searchButton");
+const datePara = document.querySelector(".date");
+const conditionsPara = document.querySelector(".conditions");
+const temperaturePara = document.querySelector(".temperature");
+const iconPara = document.querySelector(".icon");
+const loader = document.querySelector("#loader");
 
-//carousel.js
-const slidesContainer = document.querySelector(".slidesContainer");
-const allSlidesArray = document.querySelectorAll(".slide");
-const buttonRight = document.querySelector(".right");
-const buttonLeft = document.querySelector(".left");
-const navigationPannel = document.querySelector(".navigation");
-const allPlacementIndicatorsArray = document.querySelectorAll(
-  ".placementIndicator",
-);
-
-let slideIndex = 0;
-
-const moveRight = function () {
-  slideIndex++;
-  if (slideIndex >= allSlidesArray.length) {
-    slideIndex = 0;
+//1. fetch weather data from API
+async function getWeatherData (location) {
+  try {
+    const responseRaw = await fetch(`https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${location}/today?unitGroup=metric&key=JNWXP2HZFX6KWBTRBZCZTV4VB&contentType=json`, { mode: "cors" });
+    if (responseRaw.status == 200) {
+        const responseData = await responseRaw.json();
+        return responseData;
+    }
+    throw new Error(responseRaw.status);
+    
+  } catch (error){
+    console.log(`ERROR: ${error}`);
   }
-  slidesContainer.style.transform = `translateX(${-slideIndex * 400}px)`;
-};
+}
 
-const moveLeft = function () {
-  slideIndex--;
-  if (slideIndex < 0) {
-    slideIndex = allSlidesArray.length - 1;
+//2. get and process weather data from API
+async function processWeatherData (location) {
+  try {
+  const weatherData = await getWeatherData (location);
+  const {datetime: date, conditions: conditions, temp: temperature, icon:icon } = weatherData.days[0];
+  const weatherObject = { date, conditions, temperature, icon };
+  return weatherObject
+  } catch (error){
+    console.log(`ERROR: ${error}`);
   }
-  slidesContainer.style.transform = `translateX(${-slideIndex * 400}px)`;
-};
+}
 
-const setPlacementIndicator = function () {
-  allPlacementIndicatorsArray.forEach(function (item) {
-    item.classList.remove("current");
-  });
-  allPlacementIndicatorsArray[slideIndex].classList.add("current");
-};
+//3. display weather data in DOM
+function displayWeather (weatherObject) {
+  datePara.textContent = `Date: ${weatherObject.date}`;
+  conditionsPara.textContent = `Conditions: ${weatherObject.conditions}`;
+  temperaturePara.textContent = `Temperature: ${weatherObject.temperature}`;
+  iconPara.textContent = `Icon: ${weatherObject.icon}`;
+}
 
-buttonRight.addEventListener("click", () => {
-  moveRight();
-  setPlacementIndicator();
-});
+//4. toggle loader function 
+function toggleLoader() {
+  datePara.textContent = "";
+  conditionsPara.textContent = "";
+  temperaturePara.textContent = "";
+  iconPara.textContent = "";
+  loader.classList.toggle("loader")
+}
 
-buttonLeft.addEventListener("click", () => {
-  moveLeft();
-  setPlacementIndicator();
-});
-
-navigationPannel.addEventListener("click", (e) => {
-  if (e.target === navigationPannel) {
-    return;
+//5. get user location and fetch/process API weather data
+async function getAndShowWeather() {
+  try {
+    const searchInput = inputBox.value;
+    toggleLoader();
+    const weatherObject = await processWeatherData(searchInput);
+    toggleLoader();
+    displayWeather (weatherObject);
+  } catch (error){
+    console.log(`ERROR: ${error}`);
   }
-  slideIndex = [...allPlacementIndicatorsArray].indexOf(e.target);
-  setPlacementIndicator();
-  slidesContainer.style.transform = `translateX(${-slideIndex * 400}px)`;
-});
+}
 
-setInterval(function () {
-  moveRight();
-  setPlacementIndicator();
-}, 5000);
+// function getAndShowWeather() {
+//   const searchInput = inputBox.value;
+//   processWeatherData(searchInput)
+//   .then ((weatherObject) => {
+//     displayWeather (weatherObject)
+//   })
+// }
+
+buttonSearch.addEventListener("click", () => {
+  getAndShowWeather();
+});
