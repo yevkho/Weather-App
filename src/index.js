@@ -9,7 +9,7 @@ const iconPara = document.querySelector(".icon");
 const loader = document.querySelector("#loader");
 
 //1 fetch weather data from API based on location
-async function getWeatherData(location) {
+const getWeatherData = async function (location) {
   try {
     const responseRaw = await fetch(
       `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${location}/today?unitGroup=metric&key=JNWXP2HZFX6KWBTRBZCZTV4VB&contentType=json`,
@@ -22,7 +22,7 @@ async function getWeatherData(location) {
   } catch (error) {
     console.log(`ERROR: ${error}`);
   }
-}
+};
 
 //2. process raw weather data into a weatherObject
 async function processWeatherData(rawData) {
@@ -65,7 +65,7 @@ function displayIcon(icon) {
     iconPara.textContent = `Icon: ${icon} 🌧️`;
   } else if (icon == "partly-cloudy-day") {
     iconPara.textContent = `Icon: ${icon} ☁️`;
-  } else if (icon == "sunny") {
+  } else if (icon == "clear-day") {
     iconPara.textContent = `Icon: ${icon} ☀️`;
   }
 }
@@ -74,6 +74,9 @@ function displayIcon(icon) {
 async function getAndShowWeather() {
   try {
     const locationInput = inputBox.value;
+    if (locationInput === "" || locationInput === undefined) {
+      throw new Error("Location Must Be Injected...");
+    }
     toggleLoader();
     const rawData = await getWeatherData(locationInput);
     const weatherObject = await processWeatherData(rawData);
